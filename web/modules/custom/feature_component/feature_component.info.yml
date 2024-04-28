@@ -1,0 +1,8 @@
+name: Key features panel
+type: module
+description: 'To pull out 3 key feautres of a tool, product or service'
+package: custom
+core_version_requirement: ^9 || ^10
+
+libraries:
+  - feature_component/feature_style

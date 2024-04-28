@@ -1,0 +1,7 @@
+feature_style:
+  version: 1.x
+  css:
+    theme:
+      css/feature_style.css: {}
+  js:
+    js/custom_body_style.js: {}

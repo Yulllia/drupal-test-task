@@ -1,0 +1,37 @@
+# Ignore Composer dependencies
+/vendor/
+
+# Ignore DDEV-related files (if you're using DDEV)
+/.ddev/
+
+# Ignore sensitive configuration files
+/web/sites/*/settings*.php
+/web/sites/*/services*.yml
+
+# Ignore paths that contain user-generated content.
+/web/sites/*/files
+/web/sites/*/private
+
+# Ignore build artifacts and temporary files
+*.log
+*.tmp
+*.bak
+/node_modules/
+
+# Ignore configuration files that may contain sensitive information.
+
+/web/sites/*/private
+
+# Ignore SimpleTest multi-site environment.
+/web/sites/simpletest
+
+# IDE/editor-specific files
+.vscode/
+.idea/
+*.sublime-project
+
+# Cache and temporary files
+/web/sites/*/cache
+
+# Additional sensitive files
+/phpunit.xml

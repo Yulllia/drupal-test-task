@@ -1,0 +1,7 @@
+feature_component.render:
+  path: '/home/{animal}'
+  defaults:
+    _controller: 'Drupal\feature_component\Controller\FeatureComponentController::render'
+    _title: 'Welcome to feature task'
+  requirements:
+    _permission: 'access content'

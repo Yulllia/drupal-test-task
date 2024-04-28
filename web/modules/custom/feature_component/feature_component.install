@@ -1,0 +1,153 @@
+<?php
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\paragraphs\Entity\Paragraph;
+use Drupal\paragraphs\Entity\ParagraphsType; 
+
+
+function ensure_field_storage($field_name, $entity_type, $field_type, $settings = []) {
+  if (FieldStorageConfig::loadByName($entity_type, $field_name) === NULL) {
+    $field_storage = FieldStorageConfig::create([
+      'field_name' => $field_name,
+      'entity_type' => $entity_type,
+      'type' => $field_type,
+      'settings' => $settings,
+    ]);
+    $field_storage->save();
+  }
+  return FieldStorageConfig::loadByName($entity_type, $field_name);
+}
+
+function ensure_field_config($field_name, $bundle, $label, $widget_type, $widget_settings = [], $required = FALSE) {
+  $field_config_name = "$field_name:$bundle";
+  if (FieldConfig::load($field_config_name) === NULL) {
+    $field_config = FieldConfig::create([
+      'field_storage' => ensure_field_storage($field_name, 'paragraph', 'field_type', $settings ?? []),
+      'label' => $label,
+      'bundle' => $bundle,
+      'required' => $required,
+      'widget' => [
+        'type' => $widget_type,
+        'settings' => $widget_settings,
+      ],
+    ]);
+    $field_config->save();
+  }
+  return FieldConfig::load($field_config_name);
+}
+
+function feature_component_install() {
+   $widget_type = isset($field['widget_type']) ? $field['widget_type'] : 'default_widget';
+
+   $nested_paragraph_type = ParagraphsType::create([
+    'id' => 'feature_nested_content',
+    'label' => 'Feature Nested Content',
+    'description' => 'Paragraph containing illustration and feature copy.',
+  ]);
+  $nested_paragraph_type->save();
+
+  $paragraph_type = ParagraphsType::create([
+    'id' => 'key_features_panel',
+    'label' => 'Key Features Panel',
+    'description' => 'A custom paragraph for displaying key features.',
+  ]);
+  $paragraph_type->save();
+  
+  $nested_fields = [
+    'illustration' => [
+      'type' => 'image',
+      'label' => t('Feature Illustration'),
+      'widget_type' => 'image_image',
+      'required' => TRUE,
+      'settings' => [
+        'file_extensions' => 'svg png',
+      ],
+    ],
+    'feature_main_title' => [
+      'type' => 'text_long',
+      'label' => t('Feature Copy'),
+      'widget_type' => 'text_textarea',
+      'required' => TRUE,
+      'widget_settings' => [
+        'rows' => 3,
+      ],
+    ],
+  ];
+
+  foreach ($nested_fields as $field_name => $field) {
+    ensure_field_storage($field_name, 'paragraph', $field['type'], $field['settings'] ?? []);
+    ensure_field_config($field_name, 'feature_nested_content', $field['label'], $widget_type, $field['widget_settings'] ?? [], isset($field['required']) ? $field['required'] : FALSE);
+  }
+
+  // Fields for the main paragraph type
+  $main_fields = [
+    'background_color_style' => [
+      'type' => 'list_string',
+      'label' => t('Background Color'),
+      'required' => TRUE,
+      'widget_type' => 'options_select',
+      'settings' => [
+        'allowed_values' => ['light' => 'Light', 'grey' => 'Grey'],
+      ],
+    ],
+    'feature_title' => [
+      'type' => 'string',
+      'label' => t('Feature Title (optional)'),
+      'widget_type' => 'text_textarea',
+      'widget_settings' => [
+        'rows' => 2,
+      ],
+    ],
+    'feature_primary_cta' => [
+      'type' => 'link',
+      'label' => t('Primary CTA Link'),
+      'widget_type' => 'link_default',
+    ],
+    'feature_secondary_cta_copy' => [
+      'type' => 'string',
+      'label' => t('Secondary CTA Copy'),
+      'widget_type' => 'text_textarea',
+      'widget_settings' => [
+        'rows' => 2,
+      ],
+    ],
+    'feature_secondary_cta_link' => [
+      'type' => 'link',
+      'label' => t('Secondary CTA Link'),
+      'widget_type' => 'link_default',
+    ],
+    'nested_feature_content' => [
+      'type' => 'entity_reference_revisions',
+      'label' => t('Nested Feature Content'),
+      'widget' => 'paragraphs',
+      'settings' => [
+        'handler' => 'default:paragraph',
+        'handler_settings' => [
+          'target_bundles' => ['feature_nested_content'],
+        ],
+      ],
+      'required' => TRUE, 
+    ],
+  ];
+
+  foreach ($main_fields as $field_name => $field) {
+    ensure_field_storage($field_name, 'paragraph', $field['type'], $field['settings'] ?? []);
+    ensure_field_config($field_name, 'key_features_panel', $field['label'], $widget_type, $field['widget_settings'] ?? [], isset($field['required']) ? $field['required'] : FALSE);
+  }
+  // Add taxonomy reference field
+  $field_category_name = 'field_category';
+  $field_category_type = 'entity_reference';
+  $field_category_settings = [
+    'target_type' => 'taxonomy_term',
+    'handler' => 'default:taxonomy_term',
+    'handler_settings' => [
+      'target_bundles' => ['animals'],
+    ],
+    'required' => TRUE, 
+  ];
+
+  ensure_field_storage($field_category_name, 'paragraph', $field_category_type, $field_category_settings);
+  ensure_field_config($field_category_name, 'key_features_panel', 'Category', $field_category_type, 'options_select');
+
+}
+
